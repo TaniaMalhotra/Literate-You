@@ -149,7 +149,7 @@ def get_objects_from_image(image_path, config=PATH_TO_CONFIG, weights=PATH_TO_WE
 
 
 def get_text_from_image(image_path):
-    text = pytesseract.image_to_string(Image.open(image_path))
+    text = pytesseract.image_to_string(Image.open(image_path), config='--psm 10')
     print("----------- Detected Text -----------")
     print(text + "\n")
 
