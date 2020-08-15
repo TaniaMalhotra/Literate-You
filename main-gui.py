@@ -48,7 +48,7 @@ layout = [[sg.Text('   Self Tutor', font="default 52 bold", size = (25,1), justi
                  ,sg.Text("Help me read", font = "comic 24 bold", size = (20,0), justification='c')],
                  [sg.Image(image1_path, size = (270,270)),sg.VSeperator(pad=(5,0)), sg.Image(image2_path, size = (300,400), pad = ((20,0))),sg.VSeperator(pad=(5,0)),
                   sg.Image(image3_path, size = (270,270), pad = (50, (10,0))) ],
-                  [sg.SimpleButton('LEARN', pad = ((35,20), 0), key='', size=(10, 4)), sg.Button('LEARN',pad = ((35,30), 0), key='Audio_test', size=(10, 4)), sg.Button('LEARN',pad = ((50,30),0) ,key='Written_Test', size=(10, 4)), sg.Button('LEARN',pad = ((50,60),0), key='LEARN', size=(10, 4)),
+                  [sg.SimpleButton('LEARN', pad = ((35,20), 0), key='', size=(10, 4)), sg.Button('LEARN',pad = ((35,30), 0), key='', size=(10, 4)), sg.Button('LEARN',pad = ((50,30),0) ,key='Written_Test', size=(10, 4)), sg.Button('LEARN',pad = ((50,60),0), key='Audio_test', size=(10, 4)),
                   sg.Button('HELP ME READ',pad = ((75,0),0),  key='READ', size=(20, 4))]]
 
 IMG_SIZE = (500, 500)
@@ -234,7 +234,7 @@ while True:  # Event Loop for master window
 
 #----------------- READ SLAVE WINDOW---------------------------------------------------------------------------------------------------------------------------------------#
 
-    if event == "READ" and not win5_active:
+    if event == 'READ' and not win5_active:
         win5_active = True
         image_layout = [[sg.Image(background_color="grey", size=IMG_SIZE, key="-IMAGE-", pad=(10, 10))],
                         [sg.Input(key="-FILE-", enable_events=True, visible=False),
@@ -270,114 +270,123 @@ while True:  # Event Loop for master window
                 sg.Column(result_layout, size=(350, 610))
             ]
         ]
-        window1 = sg.Window('Image to Braille').Layout(layout)
-        img_path = ""
-        if event == sg.WIN_CLOSED:
-            break
+        window = sg.Window('Image to Braille').Layout(layout)
+        while True:
+            event, values = window.read()
+            if event in (None, 'Exit', 'Cancel'):
+                break
+            if event == "-FILE-":
+                try:
+                    if values["-FILE-"]:
+                        img_path = values["-FILE-"]
+                        img_data = convert_to_bytes(img_path, IMG_SIZE)
+                        print("img_data captured")
+                        print(img_data)
+                        window['-IMAGE-'].update(data=img_data)
+                        ftext, btext = DISPLAY_TEXT, BRAILLE_DISPLAY_TEXT
+                        fobj_text, bobj_text = DISPLAY_TEXT, BRAILLE_DISPLAY_TEXT
+                        window['-FILE-'].update('')
+                        window['-FTEXT-'].update(ftext)
+                        window['-BTEXT-'].update(btext)
+                        window["-WAIT-"].update("Image selected, press Detect to continue.")
+                        engine.say('Image selected, press Detect to continue.')
+                        engine.runAndWait()
+                except:
+                    pass
 
-        if event == "-FILE-":
-            try:
-                if values["-FILE-"]:
-                    img_path = values["-FILE-"]
-                    img_data = convert_to_bytes(img_path, IMG_SIZE)
+            if event == "-CAPIMG-":
+                try:
+                    cap_img_path = gimd.capture_image()
+                    if cap_img_path:
+                        img_path = cap_img_path
+                        img_data = convert_to_bytes(cap_img_path, IMG_SIZE)
+                        window['-IMAGE-'].update(data=img_data)
+                        ftext, btext = DISPLAY_TEXT, BRAILLE_DISPLAY_TEXT
+                        fobj_text, bobj_text = DISPLAY_TEXT, BRAILLE_DISPLAY_TEXT
+                        window['-FTEXT-'].update(ftext)
+                        window['-BTEXT-'].update(btext)
+                        window["-WAIT-"].update("Image captured, press Detect to continue.")
+                        engine.say('Image captured, press Detect to continue.')
+                        engine.runAndWait()
+                    # else:
+                    #     sg.popup_ok("No Image Captured!", keep_on_top=True)
+                except:
+                    pass
 
-                    window['-IMAGE-'].update(data=img_data)
-                    ftext, btext = DISPLAY_TEXT, BRAILLE_DISPLAY_TEXT
-                    fobj_text, bobj_text = DISPLAY_TEXT, BRAILLE_DISPLAY_TEXT
-                    window['-FILE-'].update('')
+            if event == "-DETECT-":
+                try:
+                    engine.say("detect button is pressed")
+                    engine.runAndWait()
+                    print(f"Image Path: {img_path}")
+                    window["-WAIT-"].update("Please wait while Detecting Text and Objects...")
+                    engine.say('Please wait while Detecting Text and Objects...')
+                    engine.runAndWait()
+                    window.refresh()
+                    # if img_path:
+                    #     sg.popup_no_buttons("Please Wait...", no_titlebar=True, keep_on_top=True,
+                    #                         auto_close=True, non_blocking=True, auto_close_duration=1)
+                    text, ftext, btext = gimd.get_text_from_image(img_path)
+
+
+                    dtext_path = gimd.get_text_bounding_box(img_path)
+                    dimg_path, objs = gimd.get_objects_from_image(img_path)
+                    fobj_text, bobj_text = gimd.text_to_braille(
+                        '\n'.join(objs) or "No Objects Detected.")
+                    img_data = convert_to_bytes(dimg_path, IMG_SIZE)
+                    dtext_data = convert_to_bytes(dtext_path, IMG_SIZE)
+                    window['-IMAGE-'].update(data=dtext_data)
                     window['-FTEXT-'].update(ftext)
                     window['-BTEXT-'].update(btext)
-                    window["-WAIT-"].update("Image selected, press Detect to continue.")
-                    engine.say('Image selected, press Detect to continue.')
+                    window["-WAIT-"].update("Detection Complete!")
+                    engine.say('Detection Complete. Press detect text or detect objects to continue')
                     engine.runAndWait()
-            except:
-                pass
+                    # sg.popup_ok("Detection Complete!", keep_on_top=True)
+                except:
+                    window["-WAIT-"].update("Detection unsuccessful!")
+                    sg.popup_ok("Make sure you have installed tesseract-ocr.\nIf you do, make sure you have the following files\nin the currect directory as shown:\n./assets/yolov3.cfg\n./assets/yolov3.weights\n./assets/yolov3.txt - for classes", title="An Error occurred!", keep_on_top=True)
+                    engine.say('Detection unsuccessful!')
+                    engine.runAndWait()
 
-        if event == "-CAPIMG-":
-            try:
-                cap_img_path = gimd.capture_image()
-                if cap_img_path:
-                    img_path = cap_img_path
-                    img_data = convert_to_bytes(cap_img_path, IMG_SIZE)
+            if event == "-DOBJS-":
+                try:
+                    window['-FTEXT-'].update(fobj_text)
+                    window['-BTEXT-'].update(bobj_text)
                     window['-IMAGE-'].update(data=img_data)
-                    ftext, btext = DISPLAY_TEXT, BRAILLE_DISPLAY_TEXT
-                    fobj_text, bobj_text = DISPLAY_TEXT, BRAILLE_DISPLAY_TEXT
+                    engine.say("These objects are present in your surroundings")
+                    engine.say(fobj_text)
+                    engine.runAndWait()
+
+
+                except:
+                    pass
+
+            if event == "-DTEXT-":
+                try:
                     window['-FTEXT-'].update(ftext)
                     window['-BTEXT-'].update(btext)
-                    window["-WAIT-"].update("Image captured, press Detect to continue.")
-                    engine.say('Image captured, press Detect to continue.')
+                    window['-IMAGE-'].update(data=dtext_data)
+                    engine.say(ftext)
                     engine.runAndWait()
-                # else:
-                #     sg.popup_ok("No Image Captured!", keep_on_top=True)
-            except:
-                pass
-
-        if event == "-DETECT-":
-            try:
-                engine.say("detect button is pressed")
-                engine.runAndWait()
-                print(f"Image Path: {img_path}")
-                window["-WAIT-"].update("Please wait while Detecting Text and Objects...")
-                engine.say('Please wait while Detecting Text and Objects...')
-                engine.runAndWait()
-                window.refresh()
-                # if img_path:
-                #     sg.popup_no_buttons("Please Wait...", no_titlebar=True, keep_on_top=True,
-                #                         auto_close=True, non_blocking=True, auto_close_duration=1)
-                text, ftext, btext = gimd.get_text_from_image(img_path)
 
 
-                dtext_path = gimd.get_text_bounding_box(img_path)
-                dimg_path, objs = gimd.get_objects_from_image(img_path)
-                fobj_text, bobj_text = gimd.text_to_braille(
-                    '\n'.join(objs) or "No Objects Detected.")
-                img_data = convert_to_bytes(dimg_path, IMG_SIZE)
-                dtext_data = convert_to_bytes(dtext_path, IMG_SIZE)
-                window['-IMAGE-'].update(data=dtext_data)
-                window['-FTEXT-'].update(ftext)
-                window['-BTEXT-'].update(btext)
-                window["-WAIT-"].update("Detection Complete!")
-                engine.say('Detection Complete. Press detect text or detect objects to continue')
-                engine.runAndWait()
-                # sg.popup_ok("Detection Complete!", keep_on_top=True)
-            except:
-                window["-WAIT-"].update("Detection unsuccessful!")
-                sg.popup_ok("Make sure you have installed tesseract-ocr.\nIf you do, make sure you have the following files\nin the currect directory as shown:\n./assets/yolov3.cfg\n./assets/yolov3.weights\n./assets/yolov3.txt - for classes", title="An Error occurred!", keep_on_top=True)
-                engine.say('Detection unsuccessful!')
-                engine.runAndWait()
+                except:
+                    pass
 
-        if event == "-DOBJS-":
-            try:
-                window['-FTEXT-'].update(fobj_text)
-                window['-BTEXT-'].update(bobj_text)
-                window['-IMAGE-'].update(data=img_data)
-                engine.say("These objects are present in your surroundings")
-                engine.say(fobj_text)
-                engine.runAndWait()
+            if event == "-CPFTEXT-":
+                pyperclip.copy(values["-FTEXT-"])
+                window["-WAIT-"].update("English Text Copied!")
+
+            if event == "-CPBTEXT-":
+                pyperclip.copy(values["-BTEXT-"])
+                window["-WAIT-"].update("Braille Text Copied!")
+
+            if event == sg.WIN_CLOSED:
+                break
+
+  #if event == sg.WIN_CLOSED:
+     # break
 
 
-            except:
-                pass
-
-        if event == "-DTEXT-":
-            try:
-                window['-FTEXT-'].update(ftext)
-                window['-BTEXT-'].update(btext)
-                window['-IMAGE-'].update(data=dtext_data)
-                engine.say(ftext)
-                engine.runAndWait()
-
-
-            except:
-                pass
-
-        if event == "-CPFTEXT-":
-            pyperclip.copy(values["-FTEXT-"])
-            window["-WAIT-"].update("English Text Copied!")
-
-        if event == "-CPBTEXT-":
-            pyperclip.copy(values["-BTEXT-"])
-            window["-WAIT-"].update("Braille Text Copied!")
 
 
 
