@@ -1,5 +1,5 @@
 # Inspiration
-Inspiration was to help eradicate illiteracy from Africa.
+Inspiration was to help an illiterte person educate himslef with the basics of reading and writing without the aid of any teacher. In remote areas, where people donot have access to educators, this application can prove to useful.  
 
 # What it does
 1. Identifies the objects shown to it, counts the number of objects and spells them out. This helps the illiterate person learn how to count, identify and learn the alphabet through spellings.
