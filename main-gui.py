@@ -16,10 +16,6 @@ engine = pyttsx3.init()
 rate = engine.getProperty('rate')
 engine.setProperty('rate', rate-50)
 l = ['A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z']
-
-r = sr.Recognizer()
-m = sr.Microphone()
-
 CURRENT_DIR = os.getcwd()
 ASSETS_DIR = os.path.join(CURRENT_DIR, "assets")
 slide1 = os.path.join(CURRENT_DIR, "images\A.jpg")
@@ -189,6 +185,8 @@ while True:  # Event Loop for master window
                    element_justification='center')
         offset = 0
         show = shows[0]
+        r = sr.Recognizer()
+        m = sr.Microphone()
         while True:
             event, values = win2.read()
             if event in (None, 'Exit', 'Cancel'):
