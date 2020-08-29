@@ -16,4 +16,4 @@ The front end was entirely made using pySimpleGUI. YOLO was used as object detec
 # Contributors
 1. Chirag goyal
 2. Tania Malhotra
-.
+
