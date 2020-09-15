@@ -50,8 +50,6 @@ layout = [[sg.Text('   Self Tutor', font="default 52 bold", size = (25,1), justi
 IMG_SIZE = (500, 500)
 IMG_BUTTON_SIZE = (15, 2)
 RESULT_BUTTON_SIZE = (15, 2)
-DISPLAY_TEXT, BRAILLE_DISPLAY_TEXT = gimd.text_to_braille(
-    "Please Select an Image and Press Detect.")
 FONT = 'Arial 10 bold'
 
 
