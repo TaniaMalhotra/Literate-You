@@ -1,5 +1,4 @@
-# This is the module for getting image data in braille
-# That is the objects and text present in the image
+# This gets the objects and text present in the image
 
 from collections import defaultdict
 from PIL import Image
@@ -34,11 +33,6 @@ def filter_text(text: str):
     # returns filtered text
     return re.sub(FILTER, '', text)
 
-
-def text_to_braille(text: str):
-    text = filter_text(text).strip()
-    # returns filtered and translated text
-    return text, text.translate(TRANSTAB)
 
 
 # object detection hereafter untill specified.
@@ -153,18 +147,10 @@ def get_text_from_image(image_path):
     print("----------- Detected Text -----------")
     print(text + "\n")
 
-    text = "\n".join([i.strip() for i in text.split("\n") if i])
-    ftext, btext = text_to_braille(text)
-    if not ftext:
-        ftext, btext = text_to_braille("No Text Detected")
-
     print("----------- Filtered Text -----------")
     print(ftext + "\n")
 
-    print("----------- Converted to Braille Text -----------")
-    print(btext + "\n")
-
-    return text, ftext, btext
+    return text, ftext
 
 
 def get_text_bounding_box(image_path):
